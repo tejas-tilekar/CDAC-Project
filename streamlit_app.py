@@ -39,17 +39,11 @@ st.image("https://www.retently.com/wp-content/uploads/2017/02/customer-lifetime-
 data = st.file_uploader("File Uploader")
 
 st.sidebar.image("http://logok.org/wp-content/uploads/2014/06/City-of-Melbourne-logo-M.png", width = 120)
-st.sidebar.markdown(""" **Made by Anshu & Tejas** """)
+st.sidebar.markdown(""" **Project by Anshu Lalwani & Tejas Tilekar** """)
 
 
 st.sidebar.title("Input Features :pencil:")
 
-
-st.sidebar.markdown("""
-
-[Example CSV Input File](https://raw.githubusercontent.com/mukulsinghal001/customer-lifetime-prediction-using-python/main/model_deployment/sample_file.csv)
-
-	""")
 
 days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 365, step = 1, value = 30)
 
@@ -79,7 +73,7 @@ st.sidebar.markdown("""
 
 Before uploading the file, please select the input features first.
 
-Also, please make sure the columns are in proper format. For reference you can download the [dummy data](https://raw.githubusercontent.com/mukulsinghal001/customer-lifetime-prediction-using-python/main/model_deployment/sample_file.csv).
+Also, please make sure the columns are in proper format. For reference you can download the [dummy data](https://github.com/tejas-tilekar/Customer/blob/main/sample_file.csv).
 
 **Note:** Only Use "CSV" File.
 
