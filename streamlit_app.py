@@ -39,7 +39,7 @@ st.image("https://sarasanalytics.com/wp-content/uploads/2019/11/Customer-Lifetim
 data = st.file_uploader("File Uploader")
 
 st.sidebar.image("http://logok.org/wp-content/uploads/2014/06/City-of-Melbourne-logo-M.png", width = 120)
-st.sidebar.markdown(""" **Made with :heart: by Mukul Singhal** """)
+st.sidebar.markdown(""" **Made by Anshu & Tejas** """)
 
 
 st.sidebar.title("Input Features :pencil:")
