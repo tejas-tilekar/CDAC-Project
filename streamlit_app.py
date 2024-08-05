@@ -33,7 +33,7 @@ Upload the RFM data and get your customer lifetime prediction on the fly !!! :sm
 	""")
 
 
-st.image("https://sarasanalytics.com/wp-content/uploads/2019/11/Customer-Lifetime-value-new-1.jpg", use_column_width = True)
+st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZP5m46zin9zXopaCOg1-ahbE_qoaOsYXb-A&s", use_column_width = True)
 
 
 data = st.file_uploader("File Uploader")
