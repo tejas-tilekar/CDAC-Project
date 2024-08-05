@@ -33,7 +33,7 @@ Upload the RFM data and get your customer lifetime prediction on the fly !!! :sm
 	""")
 
 
-st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZP5m46zin9zXopaCOg1-ahbE_qoaOsYXb-A&s", use_column_width = True)
+st.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuBMnYjfRUU5fcQQLNqxEBfwPjsoWu2xHLcw&s", use_column_width = True)
 
 
 data = st.file_uploader("File Uploader")
