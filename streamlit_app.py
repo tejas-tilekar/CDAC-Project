@@ -132,6 +132,7 @@ if data is not None:
 		k_model = KMeans(n_clusters = 4, init = "k-means++", max_iter = 1000).fit(new_df)
 
 		labels = k_model.labels_
+		
 
 		labels = pd.Series(labels, name = "Labels")
 
