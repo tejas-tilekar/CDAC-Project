@@ -50,13 +50,13 @@ days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 36
 profit = st.sidebar.slider("Select the Profit Margin", min_value = 0.01, max_value = 0.09, step = 0.01, value = 0.05)
 
 
-t_days = days
+# t_days = days
 
-profit_m = profit
+# profit_m = profit
 
 slider_data = {
-	"Days": t_days,
-	"Profit": profit_m
+	"Days": days,
+	"Profit": profit
 }
 
 st.sidebar.markdown("""
@@ -82,7 +82,7 @@ Also, please make sure the columns are in proper format. For reference you can d
 
 if data is not None:
 
-	def load_data(data, days = t_days, profit = profit_m):
+	def load_data(data, days , profit):
 
 		input_data = pd.read_csv(data)
 
@@ -193,7 +193,7 @@ if data is not None:
 
 		""")
 
-	load_data(data)
+	load_data(data,days,profit)
 
 else:
 	st.text("Please Upload the CSV File")
