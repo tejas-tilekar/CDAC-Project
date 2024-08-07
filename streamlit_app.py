@@ -146,7 +146,7 @@ if data is not None:
 
 		#saving the input data in the separate variable 
 
-		download = input_data
+		# download = input_data
 
 		st.write(input_data)
 
@@ -184,7 +184,7 @@ if data is not None:
 
 		if st.button("Download"):
 			st.write("Successfully Downloaded!!! Please Check Your Default Download Location...:smile:" )
-			return download.to_csv("customer_lifetime_prediction_result.csv")
+			return input_data.to_csv("yeah.csv")
 
 
 	#calling the function		
