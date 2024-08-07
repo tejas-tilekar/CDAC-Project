@@ -82,7 +82,7 @@ Also, please make sure the columns are in proper format. For reference you can d
 
 if data is not None:
 
-	def load_data(data, day = t_days, profit = profit_m):
+	def load_data(data, days = t_days, profit = profit_m):
 
 		input_data = pd.read_csv(data)
 
