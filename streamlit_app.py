@@ -90,7 +90,7 @@ if data is not None:
 
         #Pareto Model
 
-		pareto_model = lifetimes.ParetoNBDFitter(penalizer_coef = 0.1)
+		pareto_model = lifetimes.ParetoNBDFitter(penalizer_coef = 0.0)
 		pareto_model.fit(input_data["frequency"],input_data["recency"],input_data["T"])
 		input_data["p_not_alive"] = 1-pareto_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
 		input_data["p_alive"] = pareto_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
@@ -100,22 +100,24 @@ if data is not None:
 
         #Gamma Gamma Model
 
-		idx = input_data[(input_data["frequency"] <= 0.0)]
-		idx = idx.index
-		input_data = input_data.drop(idx, axis = 0)
-		m_idx = input_data[(input_data["monetary_value"] <= 0.0)].index
-		input_data = input_data.drop(m_idx, axis = 0)
+		# idx = input_data[(input_data["frequency"] <= 0.0)]
+		# idx = idx.index
+		# input_data = input_data.drop(idx, axis = 0)
+		# m_idx = input_data[(input_data["monetary_value"] <= 0.0)].index
+		# input_data = input_data.drop(m_idx, axis = 0)
+
+		input_data = input_data[(input_data["frequency"] > 0) & (input_data["monetary_value"] > 0)]
 
 
 		input_data.reset_index().drop("index", axis = 1, inplace = True)
 
-		ggf_model =  lifetimes.GammaGammaFitter(penalizer_coef=0.1)
+		ggf_model =  lifetimes.GammaGammaFitter(penalizer_coef=0.0)
 
 		ggf_model.fit(input_data["frequency"], input_data["monetary_value"])
 
 		input_data["expected_avg_sales_"] = ggf_model.conditional_expected_average_profit(input_data["frequency"], input_data["monetary_value"])
 
-		input_data["predicted_clv"] = ggf_model.customer_lifetime_value(pareto_model, input_data["frequency"], input_data["recency"], input_data["T"], input_data["monetary_value"], time = 30, freq = 'D', discount_rate = 0.01)
+		input_data["predicted_clv"] = ggf_model.customer_lifetime_value(pareto_model, input_data["frequency"], input_data["recency"], input_data["T"], input_data["monetary_value"], time = days, freq = 'D', discount_rate = 0.01)
 
 		input_data["profit_margin"] = input_data["predicted_clv"]*profit
 
@@ -135,7 +137,7 @@ if data is not None:
 
 		input_data = pd.concat([input_data, labels], axis = 1)
 
-		label_mapper = dict({0 : "Low", 3: "Medium", 1: "High", 2: "V_High"})
+		label_mapper = dict({0 : "Low", 3: "High", 1: "V_High", 2: "Medium"})
 
 		input_data["Labels"] = input_data["Labels"].map(label_mapper)
 
