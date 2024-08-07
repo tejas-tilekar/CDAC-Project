@@ -45,7 +45,7 @@ st.sidebar.markdown(""" **Project by Anshu Lalwani & Tejas Tilekar** """)
 st.sidebar.title("Input Features :pencil:")
 
 
-days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 365, step = 1, value = 30)
+days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 365, step = 1, value = 300)
 
 profit = st.sidebar.slider("Select the Profit Margin", min_value = 0.01, max_value = 0.09, step = 0.01, value = 0.05)
 
