@@ -45,9 +45,9 @@ st.sidebar.markdown(""" **Project by Anshu Lalwani & Tejas Tilekar** """)
 st.sidebar.title("Input Features :pencil:")
 
 
-days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 365, step = 1, value = 300)
+days = st.sidebar.slider("Select The No. Of Days", min_value = 1, max_value = 365, step = 1)
 
-profit = st.sidebar.slider("Select the Profit Margin", min_value = 0.01, max_value = 0.09, step = 0.01, value = 0.05)
+profit = st.sidebar.slider("Select the Profit Margin", min_value = 0.01, max_value = 0.09, step = 0.01)
 
 
 # t_days = days
@@ -129,12 +129,14 @@ if data is not None:
 
 		new_df = input_data[col]
 
-		k_model = KMeans(n_clusters = 4, init = "k-means++", max_iter = 1000).fit(new_df)
+		k_model = KMeans(n_clusters = 4, init = "k-means++", max_iter = 1000)
+		k_model_fit = k_model.fit(new_df)
 
-		labels = k_model.labels_
+		labels = k_model_fit.labels_
 		
 
 		labels = pd.Series(labels, name = "Labels")
+
 
 		input_data = pd.concat([input_data, labels], axis = 1)
 
