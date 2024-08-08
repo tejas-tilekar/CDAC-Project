@@ -124,7 +124,7 @@ if data is not None:
 
 		new_df = input_data[col]
 
-		k_model = KMeans(n_clusters = 4, init = "k-means++", max_iter = 1000)
+		k_model = KMeans(n_clusters = 5, init = "k-means++", max_iter = 1000)
 		k_model_fit = k_model.fit(new_df)
 
 		labels = k_model_fit.labels_
@@ -135,7 +135,7 @@ if data is not None:
 
 		input_data = pd.concat([input_data, labels], axis = 1)
 
-		label_mapper = dict({0 : "Low", 3: "High", 1: "V_High", 2: "Medium"})
+		label_mapper = dict({0 : "V_Low", 3: "High", 1: "V_High", 2: "Medium", 4:"Low"})
 
 		input_data["Labels"] = input_data["Labels"].map(label_mapper)
 
