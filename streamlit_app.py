@@ -1,4 +1,4 @@
-
+iu
 #adding necessary libraries
 import streamlit as st
 import pandas as pd
@@ -135,7 +135,7 @@ if data is not None:
 
 		input_data = pd.concat([input_data, labels], axis = 1)
 
-		label_mapper = dict({0 : "Low", 3: "High", 1: "V_High", 2: "V_Low", 4:"Medium"})
+		label_mapper = dict({0 : "Medium", 3: "High", 1: "V_High", 2: "V_Low", 4:"Low"})
 
 		input_data["Labels"] = input_data["Labels"].map(label_mapper)
 
