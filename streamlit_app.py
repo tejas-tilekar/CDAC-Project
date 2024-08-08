@@ -181,9 +181,9 @@ if data is not None:
 
 		#creating a button to download the result
 
-		if st.button("Download"):
-			st.write("Successfully Downloaded!!! Please Check Your Default Download Location...:smile:" )
-			return input_data.to_csv("yeah.csv")
+		# if st.button("Download"):
+		# 	st.write("Successfully Downloaded!!! Please Check Your Default Download Location...:smile:" )
+		# 	return input_data.to_csv("yeah.csv")
 
 
 	#calling the function		
