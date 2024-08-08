@@ -15,13 +15,9 @@ warnings.filterwarnings("ignore")
 from math import sqrt
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from lifetimes.plotting import plot_frequency_recency_matrix
-from lifetimes.plotting import plot_probability_alive_matrix
-from lifetimes.plotting import plot_period_transactions
-from lifetimes.utils import calibration_and_holdout_data
+from lifetimes.plotting import *
 from lifetimes import ParetoNBDFitter
-from lifetimes.plotting import plot_history_alive
-from sklearn.metrics import mean_squared_error, r2_score
+
 
 np.float = float 
 
@@ -116,7 +112,7 @@ if data is not None:
 
 		ggf_model.fit(input_data["frequency"], input_data["monetary_value"])
 
-		input_data["expected_avg_sales_"] = ggf_model.conditional_expected_average_profit(input_data["frequency"], input_data["monetary_value"])
+		input_data["expected_avg_sales"] = ggf_model.conditional_expected_average_profit(input_data["frequency"], input_data["monetary_value"])
 
 		input_data["predicted_clv"] = ggf_model.customer_lifetime_value(pareto_model, input_data["frequency"], input_data["recency"], input_data["T"], input_data["monetary_value"], time = days, freq = 'D', discount_rate = 0.01)
 
@@ -126,7 +122,7 @@ if data is not None:
 
 		#K-Means Model
 
-		col = ["predicted_purchases", "expected_avg_sales_", "predicted_clv", "profit_margin"]
+		col = ["predicted_purchases", "expected_avg_sales", "predicted_clv", "profit_margin"]
 
 		new_df = input_data[col]
 
