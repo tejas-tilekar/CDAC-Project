@@ -25,10 +25,10 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 np.float = float 
 
-st.markdown(""" # Customer Lifetime Prediction App 
+st.markdown(""" # CLV Prediction and Segmentation App 
 
 
-Upload the RFM data and get your customer lifetime prediction on the fly !
+Upload the RFM data to get the customer lifetime value and their segmentation
 
 	""")
 
@@ -38,7 +38,7 @@ st.image("https://www.retently.com/wp-content/uploads/2017/02/customer-lifetime-
 
 data = st.file_uploader("File Uploader")
 
-st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width = 120)
+st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width = 150)
 st.sidebar.markdown(""" **Project by Anshu Lalwani & Tejas Tilekar** """)
 
 
