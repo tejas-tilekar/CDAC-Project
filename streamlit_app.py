@@ -38,7 +38,7 @@ st.image("https://www.retently.com/wp-content/uploads/2017/02/customer-lifetime-
 
 data = st.file_uploader("File Uploader")
 
-st.sidebar.image("http://logok.org/wp-content/uploads/2014/06/City-of-Melbourne-logo-M.png", width = 120)
+st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width = 120)
 st.sidebar.markdown(""" **Project by Anshu Lalwani & Tejas Tilekar** """)
 
 
