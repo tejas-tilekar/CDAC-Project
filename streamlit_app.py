@@ -51,21 +51,20 @@ profit = st.sidebar.slider("Select the Profit Margin", min_value = 0.01, max_val
 
 
 # t_days = days
-
 # profit_m = profit
 
-slider_data = {
-	"Days": days,
-	"Profit": profit
-}
+# slider_data = {
+# 	"Days": days,
+# 	"Profit": profit
+# }
 
-st.sidebar.markdown("""
+# st.sidebar.markdown("""
 
-### Selected Input Features :page_with_curl:
+# ### Selected Input Features :page_with_curl:
 
-	""")
+# 	""")
 
-features = pd.DataFrame(slider_data, index = [0])
+# features = pd.DataFrame(slider_data, index = [0])
 
 #st.sidebar.write(features)
 
