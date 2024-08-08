@@ -35,9 +35,7 @@ st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-
 data = st.file_uploader("File Uploader")
 
 st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width = 150)
-st.sidebar.markdown(""" **Project by** 
-
-**Anshu Lalwani & Tejas Tilekar** """)
+st.sidebar.markdown(""" **CDAC Project ** """)
 
 
 st.sidebar.title("Input Features :pencil:")
