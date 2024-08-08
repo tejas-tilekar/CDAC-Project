@@ -29,7 +29,7 @@ Upload the RFM data to get the customer lifetime value and their segmentation
 	""")
 
 
-st.image("https://www.retently.com/wp-content/uploads/2017/02/customer-lifetime-value.png", use_column_width = True)
+st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_column_width = True)
 
 
 data = st.file_uploader("File Uploader")
