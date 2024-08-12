@@ -68,7 +68,7 @@ st.sidebar.markdown("""
 
 Before uploading the file, please select the input features first.
 
-Also, please make sure the columns are in proper format. For reference you can download the [dummy data](https://github.com/tejas-tilekar/CDAC-Project/blob/main/sample_file.csv).
+Also, please make sure the columns are in proper format. For reference you can download the [dummy data](https://github.com/tejas-tilekar/CDAC-Project/blob/main/Deployment%20files/sample_file.csv).
 
 **Note:** Only Use "CSV" File.
 
