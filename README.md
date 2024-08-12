@@ -26,9 +26,9 @@ To create the model first we have to understand the course of business or in sho
 
 There are basically two types of business context which I am going to discuss below regards to the relationship and purchase opportunities.
 
-a) Contractual - Contractual business refers to the business where there is a definite time when the customer is going to churn or we can say we know when the customer is going to be dropped. This type of customer relationship known as contractual and the customers called the subscription customers. For Ex - Hotstar, Netflix, Amazon Prime Subscription
+**a) Contractual** - Contractual business refers to the business where there is a definite time when the customer is going to churn or we can say we know when the customer is going to be dropped. This type of customer relationship known as contractual and the customers called the subscription customers. For Ex - Hotstar, Netflix, Amazon Prime Subscription
 
-b) Non-Contractual - In the non-contractual world, customers do go away, but they do so silently; they have no need to tell us they are leaving. This makes for a much trickier CLV calculation. For Ex- Retail/E-Commerce
+**b) Non-Contractual** - In the non-contractual world, customers do go away, but they do so silently; they have no need to tell us they are leaving. This makes for a much trickier CLV calculation. For Ex- Retail/E-Commerce
 
 
 **Purchase Opportunities Types:**
@@ -44,6 +44,6 @@ Following the problem and motivation described above, the purpose of this study 
 
 **Steps Involved in this Project**: Data Importing | Data Cleaning | Exploratory Data Analysis | Feature Engineering/Extraction | Cross Validation | Different Predictive Models Building | LTV Based Customer Segmentation | Model Evaluation | Model Deployment
 
-Libraries Used
+## Libraries Used
 
-a) Scikit Learn b) Lifetimes c) Plotly, Matplotlib, Seaborn, Altair d) XLRD e) Streamlit f) Numpy g) Pandas h) Datetime i) Math i) Warnings 
+**a) Scikit Learn b) Lifetimes c) Plotly, Matplotlib, Seaborn, Altair d) XLRD e) Streamlit f) Numpy g) Pandas h) Datetime i) Math i) Warnings**
