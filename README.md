@@ -1,15 +1,15 @@
 # **Customer Lifetime Value Prediction and Segmentation**
-**Objective:**
+## **Objective:**
 We have to predict the customer's lifetime value and segment the customers based on their LTV so that we can provide this information to the marketing team for the campaign & CPA optimization.
 
-**Introduction:**
+## **Introduction:**
 The dataset which we are going to use in this problem has taken from the UCI Machine Learning Repository. This is a transactional data set which contains all the actual transactions for a UK-based and registered ecommerce online retail store. The company mainly sells unique all-occasion gifts. This dataset has several features which includes the Invoice Number, Stock Code, Product Description, Product Quantity, Invoice Date, Unit Price, Customer ID, etc.
 
 Before starting with the model, let's first understand what is Customer Lifetime Value.
 
 Customer Lifetime Value Prediction
 
-**Abstract**
+## **Abstract**
 What is Customer Lifetime Value?
 
 Customer lifetime value (CLV) is one of the key stats likely to be tracked as part of a customer experience program. CLV is a measurement of how valuable a customer is to your company with an unlimited time span as opposed to just the first purchase. This metric helps you understand a reasonable cost per acquisition. CLV is the total worth to a business of a customer over the whole period of their relationship. It’s an important metric as it costs less to keep existing customers than it does to acquire new ones, so increasing the value of your existing customers is a great way to drive growth.
