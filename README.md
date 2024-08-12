@@ -1,4 +1,4 @@
-**Customer Lifetime Value Prediction and Segmentation**
+# **Customer Lifetime Value Prediction and Segmentation**
 **Objective:**
 We have to predict the customer's lifetime value and segment the customers based on their LTV so that we can provide this information to the marketing team for the campaign & CPA optimization.
 
