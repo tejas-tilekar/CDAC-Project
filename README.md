@@ -47,3 +47,5 @@ Following the problem and motivation described above, the purpose of this study 
 ## Libraries Used
 
 **a) Scikit Learn b) Lifetimes c) Plotly, Matplotlib, Seaborn, Altair d) XLRD e) Streamlit f) Numpy g) Pandas h) Datetime i) Math i) Warnings**
+
+This site was built using [GitHub Pages](https://pages.github.com/).
