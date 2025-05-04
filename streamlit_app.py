@@ -289,8 +289,8 @@ if data is not None:
             bar_fig, bar_ax = plt.subplots(figsize=(10, 6))
             sns.barplot(
                 data=top_customers,
-                x='predicted_clv',
-                y='CustomerID',
+                x='CustomerID',
+                y='predicted_clv',
                 palette='viridis',
                 ax=bar_ax
             )
