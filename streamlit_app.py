@@ -101,14 +101,14 @@ if data is not None:
                 
                 st.write("Calculating amount...")
                 df['Amount'] = df['Quantity'] * df['UnitPrice']
-                st.dataframe(df.describe())
+                # st.dataframe(df.describe())
                 
                 # Create RFM data
                 st.write("Creating RFM summaries...")
                 rfmt_data = lifetimes.utils.summary_data_from_transaction_data(
                     df, 'CustomerID', 'InvoiceDate', monetary_value_col='Amount'
                 )
-                st.dataframe(rfmt_data.describe())
+                # st.dataframe(rfmt_data.describe())
                 
                 # Create summary_bgf (to match first code)
                 summary_bgf = rfmt_data.copy()
@@ -166,7 +166,7 @@ if data is not None:
                     summary_['frequency'], summary_['monetary_value']
                 )
 
-                st.dataframe(summary_.head())
+                # st.dataframe(summary_.head())
                 
                 # Calculate CLV - exactly as in first code
                 st.write("Calculating Customer Lifetime Value...")
