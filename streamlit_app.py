@@ -162,7 +162,7 @@ if data is not None:
                     summary_['frequency'], summary_['monetary_value']
                 )
 
-                st.write(summary_.head())
+                st.dataframe(summary_.head())
                 
                 # Calculate CLV - exactly as in first code
                 st.write("Calculating Customer Lifetime Value...")
