@@ -15,7 +15,7 @@ from sklearn.cluster import KMeans
 try:
     import lifetimes
     from lifetimes.plotting import *
-    from lifetimes import ParetoNBDFitter
+    from lifetimes import BetaGeoFitter
 except ImportError:
     st.error("The lifetimes package is not installed. Please install it with 'pip install lifetimes'.")
     st.stop()
@@ -35,7 +35,7 @@ data = st.file_uploader("File Uploader", type=['csv'])
 
 # Sidebar
 st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width=150)
-st.sidebar.markdown("**CDAC Project**")
+st.sidebar.markdown("**MBA Project**")
 st.sidebar.title("Input Features :pencil:")
 
 # Sidebar inputs
@@ -70,16 +70,16 @@ if data is not None:
                 st.error(f"Missing required columns: {', '.join(missing_columns)}. Please ensure your CSV has these columns.")
                 return
             
-            # Pareto Model
-            pareto_model = lifetimes.ParetoNBDFitter(penalizer_coef=0.0)
-            pareto_model.fit(input_data["frequency"], input_data["recency"], input_data["T"])
+            # BG Model
+            bg_model = lifetimes.BetaGeoFitter(penalizer_coef=0.5)
+            bg_model.fit(input_data["frequency"], input_data["recency"], input_data["T"])
             
-            input_data["p_not_alive"] = 1 - pareto_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
-            input_data["p_alive"] = pareto_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
+            input_data["p_not_alive"] = 1 - bg_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
+            input_data["p_alive"] = bg_model.conditional_probability_alive(input_data["frequency"], input_data["recency"], input_data["T"])
             
             # Predict purchases for future time period
             t = days
-            input_data["predicted_purchases"] = pareto_model.conditional_expected_number_of_purchases_up_to_time(t, input_data["frequency"], input_data["recency"], input_data["T"])
+            input_data["predicted_purchases"] = bg_model.conditional_expected_number_of_purchases_up_to_time(t, input_data["frequency"], input_data["recency"], input_data["T"])
             
             # Gamma Gamma Model - Filter out zero frequency and monetary values
             model_data = input_data[(input_data["frequency"] > 0) & (input_data["monetary_value"] > 0)].copy()
@@ -98,7 +98,7 @@ if data is not None:
             
             # Calculate CLV
             model_data["predicted_clv"] = ggf_model.customer_lifetime_value(
-                pareto_model, 
+                bg_model, 
                 model_data["frequency"], 
                 model_data["recency"], 
                 model_data["T"], 
@@ -121,14 +121,14 @@ if data is not None:
             scaled_data = scaler.fit_transform(new_df)
             
             # K-Means clustering
-            k_model = KMeans(n_clusters=5, init="k-means++", max_iter=1000, random_state=42)
+            k_model = KMeans(n_clusters=4, init="k-means++", max_iter=1000, random_state=42)
             cluster_labels = k_model.fit_predict(scaled_data)
             
             # Add labels to the dataframe
             model_data["Labels"] = cluster_labels
             
             # Map numerical labels to descriptive labels
-            label_mapper = {0: "Medium", 1: "V_High", 2: "V_Low", 3: "Low", 4: "High"}
+            label_mapper = {0: "Low", 1: "High", 2: "Medium", 3: "V_High"}
             model_data["Labels"] = model_data["Labels"].map(label_mapper)
             
             # Display the results dataframe
