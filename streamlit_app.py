@@ -88,10 +88,12 @@ if data is not None:
                 
                 # Clean data
                 st.write("Converting dates...")
+                df=df.drop_duplicates()
                 df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate']).dt.date
                 
                 st.write("Removing negative quantities...")
                 df = df[(df.Quantity > 0)]
+                
                 
                 st.write("Removing missing CustomerIDs...")
                 df.dropna(axis=0, subset=["CustomerID"], inplace=True)
@@ -99,7 +101,7 @@ if data is not None:
                 
                 st.write("Calculating amount...")
                 df['Amount'] = df['Quantity'] * df['UnitPrice']
-                st.dataframe(df.isnull().sum().reset_index().rename(columns={0: 'Missing Values', 'index': 'Column'}))
+    
 
                 st.dataframe(df.describe())
                 
