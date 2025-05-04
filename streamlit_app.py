@@ -1,34 +1,16 @@
 import streamlit as st
 import pandas as pd
-import math
 import numpy as np
-import datetime
-import altair as alt
-import time
-import warnings
-warnings.filterwarnings("ignore")
-from math import sqrt
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-# Import lifetimes package with proper error handling
-try:
-    import lifetimes
-    from lifetimes.plotting import *
-    from lifetimes import BetaGeoFitter, ParetoNBDFitter, GammaGammaFitter
-    from lifetimes.utils import calibration_and_holdout_data
-except ImportError:
-    st.error("The lifetimes package is not installed. Please install it with 'pip install lifetimes'.")
-    st.stop()
-
-# Seed for reproducibility
-np.random.seed(42)
+import warnings
+warnings.filterwarnings("ignore")
 
 # App title and description
-st.title("CLV Prediction and Segmentation App")
-st.markdown("Upload the transaction data to get the customer lifetime value and their segmentation")
+st.title("Customer Segmentation from Pre-Processed RFM Data")
+st.markdown("Upload your pre-processed RFM data to visualize customer segments")
 
 # Display header image
 st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_container_width=True)
@@ -38,292 +20,245 @@ st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-l
 st.sidebar.markdown("**MBA Project**")
 st.sidebar.title("Input Features :pencil:")
 
-# Sidebar inputs
-days = st.sidebar.slider("Select The No. Of Days", min_value=1, max_value=365, step=1, value=30)  # Default to 30 to match original code
-profit_margin = st.sidebar.slider("Select the Profit Margin", min_value=0.01, max_value=0.09, step=0.01, value=0.05)  # Default to 0.05 as in original code
-
-# Add calibration date selector
-cal_end_date = st.sidebar.date_input(
-    "Calibration Period End Date", 
-    value=datetime.date(2011, 6, 8),  # Default from original code
-    help="The date ending the calibration period"
-)
-
-obs_end_date = st.sidebar.date_input(
-    "Observation Period End Date", 
-    value=datetime.date(2011, 12, 9),  # Default from original code
-    help="The date ending the observation period"
-)
+# Sidebar input for profit margin (in case you need to recalculate)
+profit_margin = st.sidebar.slider("Select the Profit Margin", min_value=0.01, max_value=0.09, step=0.01, value=0.05)
 
 # Sidebar instructions
 st.sidebar.markdown("""
-Before uploading the file, please select the input features first.
+## Instructions
+Upload your pre-processed RFM data CSV file.
 
-**Required File Format**:
-- A CSV file with transaction data containing columns:
-  - CustomerID
-  - InvoiceDate
-  - Quantity
-  - UnitPrice
-  - Amount (optional, will be calculated if not present)
+**Expected columns:**
+- CustomerID
+- frequency
+- recency
+- T
+- monetary_value
+- predicted_purchases
+- actual_purchases (optional)
+- Expected_Avg_Sales (optional)
+- predicted_clv 
+- profit_margin (optional, will recalculate if needed)
 
-For best results, use the same dataset as the original analysis.
-
-**Note:** Only Use "CSV" File.
+The app will segment customers based on your data and provide visualizations.
 """)
 
-# File uploader now accepts transaction data, not RFM data
-uploaded_file = st.file_uploader("Upload Transaction Data CSV", type=['csv'])
+# File uploader
+uploaded_file = st.file_uploader("Upload Pre-processed RFM Data", type=['csv'])
 
-# Main function to process transaction data
+# Main processing function
 if uploaded_file is not None:
-    def process_data(transaction_data, days, profit_margin, cal_end_date, obs_end_date):
+    def process_rfm_data(rfm_data, profit_margin):
         try:
-            # Progress indicator
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+            # Load the data
+            df = pd.read_csv(rfm_data)
             
-            # Step 1: Load the transaction data
-            status_text.text('Loading data...')
-            df = pd.read_csv(transaction_data)
-            progress_bar.progress(10)
-            
-            # Check if required columns exist
-            required_columns = ['CustomerID', 'InvoiceDate', 'Quantity', 'UnitPrice']
+            # Check for required columns
+            required_columns = ["CustomerID", "frequency", "recency", "T", "monetary_value", "predicted_purchases", "predicted_clv"]
             missing_columns = [col for col in required_columns if col not in df.columns]
             
             if missing_columns:
                 st.error(f"Missing required columns: {', '.join(missing_columns)}")
                 return
             
-            # Step 2: Data preprocessing as in original code
-            status_text.text('Preprocessing data...')
+            # Show data sample
+            st.subheader("Data Preview")
+            st.dataframe(df.head())
             
-            # Rename column if needed
-            if 'Customer ID' in df.columns and 'CustomerID' not in df.columns:
-                df.rename(columns={'Customer ID': 'CustomerID'}, inplace=True)
+            # Basic data stats
+            st.subheader("Dataset Information")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Customers", df["CustomerID"].nunique())
+            with col2:
+                st.metric("Avg CLV", f"${df['predicted_clv'].mean():.2f}")
+            with col3:
+                st.metric("Avg Predicted Purchases", f"{df['predicted_purchases'].mean():.2f}")
             
-            # Drop duplicates
-            df = df.drop_duplicates()
+            # Recalculate profit margin if needed or missing
+            if "profit_margin" not in df.columns or st.checkbox("Recalculate profit margin with new value"):
+                df["profit_margin"] = df["predicted_clv"] * profit_margin
+                st.success(f"Profit margin recalculated using {profit_margin:.2%}")
             
-            # Drop rows with null values in Description and CustomerID
-            if 'Description' in df.columns:
-                df.dropna(axis=0, subset=["Description"], inplace=True)
-            df.dropna(axis=0, subset=["CustomerID"], inplace=True)
+            # Prepare data for clustering
+            if "Expected_Avg_Sales" not in df.columns:
+                clustering_columns = ["predicted_purchases", "predicted_clv", "profit_margin"]
+                st.warning("Expected_Avg_Sales column not found. Using predicted_purchases, predicted_clv, and profit_margin for clustering.")
+            else:
+                clustering_columns = ["predicted_purchases", "Expected_Avg_Sales", "predicted_clv", "profit_margin"]
             
-            # Keep only positive quantities
-            df = df[(df.Quantity > 0)]
+            # Extract data for clustering
+            cluster_data = df[clustering_columns].copy()
             
-            # Convert dates
-            df['InvoiceDate'] = pd.to_datetime(df['InvoiceDate']).dt.date
+            # Handle any NaN values
+            cluster_data = cluster_data.fillna(0)
             
-            # Calculate Amount if not present
-            if 'Amount' not in df.columns:
-                df['Amount'] = df['Quantity'] * df['UnitPrice']
-            
-            progress_bar.progress(30)
-            
-            # Step 3: Generate RFM data
-            status_text.text('Generating RFM data...')
-            rfmt_data = lifetimes.utils.summary_data_from_transaction_data(
-                df, 'CustomerID', 'InvoiceDate', monetary_value_col='Amount'
-            )
-            
-            progress_bar.progress(40)
-            
-            # Step 4: Beta Geo Fitter model
-            status_text.text('Building BG/NBD model...')
-            bgf = BetaGeoFitter(penalizer_coef=0.5)
-            bgf.fit(rfmt_data['frequency'], rfmt_data['recency'], rfmt_data['T'])
-            
-            # Step 5: Calibration and holdout data
-            status_text.text('Splitting into calibration and holdout data...')
-            summary_cal_holdout = calibration_and_holdout_data(
-                df, 'CustomerID', 'InvoiceDate',
-                calibration_period_end=cal_end_date.strftime('%Y-%m-%d'),
-                observation_period_end=obs_end_date.strftime('%Y-%m-%d')
-            )
-            
-            progress_bar.progress(50)
-            
-            # Step 6: Fit model on calibration data
-            status_text.text('Fitting model on calibration data...')
-            bgf.fit(
-                summary_cal_holdout['frequency_cal'], 
-                summary_cal_holdout['recency_cal'], 
-                summary_cal_holdout['T_cal'],
-                penalizer_coef=0.5
-            )
-            
-            progress_bar.progress(60)
-            
-            # Step 7: Create summary for predictions
-            status_text.text('Calculating predictions...')
-            summary_bgf = rfmt_data.copy().reset_index()
-            
-            # Calculate predicted purchases for the specified time period
-            summary_bgf['predicted_purchases'] = bgf.conditional_expected_number_of_purchases_up_to_time(
-                days, 
-                rfmt_data['frequency'], 
-                rfmt_data['recency'], 
-                rfmt_data['T']
-            )
-            
-            # Calculate actual purchases using same method as original code
-            summary_bgf["actual_purchases"] = summary_cal_holdout['frequency_holdout']/10
-            summary_bgf = summary_bgf.fillna(value=0)  # Fill NA values with 0 like in original
-            
-            progress_bar.progress(70)
-            
-            # Step 8: Filter data where monetary_value and frequency > 0
-            status_text.text('Building Gamma-Gamma model...')
-            summary_ = summary_bgf[(summary_bgf["monetary_value"] > 0) & (summary_bgf["frequency"] > 0)]
-            
-            # Fit Gamma-Gamma model
-            ggf = GammaGammaFitter(penalizer_coef=0.0)
-            ggf.fit(summary_["frequency"], summary_["monetary_value"])
-            
-            # Calculate expected average sales
-            summary_["Expected_Avg_Sales"] = ggf.conditional_expected_average_profit(
-                summary_["frequency"], summary_["monetary_value"]
-            )
-            
-            progress_bar.progress(80)
-            
-            # Step 9: Calculate CLV using same parameters as original
-            status_text.text('Calculating customer lifetime value...')
-            summary_["predicted_clv"] = ggf.customer_lifetime_value(
-                bgf,
-                summary_["frequency"],
-                summary_["recency"],
-                summary_["T"],
-                summary_["monetary_value"],
-                time=days,
-                freq='D',
-                discount_rate=0.01
-            )
-            
-            # Calculate profit margin
-            summary_["profit_margin"] = summary_["predicted_clv"] * profit_margin
-            
-            progress_bar.progress(90)
-            
-            # Step 10: K-means clustering
-            status_text.text('Segmenting customers...')
-            
-            # Select columns for clustering exactly as in original
-            col = ["predicted_purchases", "Expected_Avg_Sales", "predicted_clv", "profit_margin"]
-            new_df = summary_[col]
-            
-            # Scale the data
+            # Scale the data for clustering
             scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(new_df)
+            scaled_data = scaler.fit_transform(cluster_data)
             
-            # K-means clustering with 4 clusters
-            k_model = KMeans(n_clusters=4, init="k-means++", max_iter=1000, random_state=42)
-            k_model_fit = k_model.fit(scaled_data)
+            # Perform K-means clustering
+            st.subheader("Customer Segmentation")
             
-            # Get labels and map to segments
-            labels = pd.Series(k_model_fit.labels_, name="Labels")
-            summary_ = pd.concat([summary_, labels], axis=1)
+            # Allow user to choose number of clusters or use default
+            if st.checkbox("Customize number of clusters"):
+                num_clusters = st.slider("Number of clusters", min_value=2, max_value=10, value=4)
+            else:
+                num_clusters = 4  # Default to 4 clusters as in original code
             
-            # Map numerical labels to descriptive labels - using same mapping as original
-            label_mapper = {0: "Low", 1: "High", 2: "Medium", 3: "V_High"}
-            summary_["Labels"] = summary_["Labels"].map(label_mapper)
+            k_model = KMeans(n_clusters=num_clusters, init="k-means++", max_iter=1000, random_state=42)
+            cluster_labels = k_model.fit_predict(scaled_data)
             
-            progress_bar.progress(100)
-            status_text.text('Done!')
+            # Map cluster labels to meaningful segments
+            # If 4 clusters, use the original mapping
+            if num_clusters == 4:
+                label_mapper = {0: "Low", 1: "High", 2: "Medium", 3: "V_High"}
+            else:
+                # Create generic labels for other cluster counts
+                label_mapper = {i: f"Segment {i+1}" for i in range(num_clusters)}
             
-            # Display results
-            st.markdown("## Customer Lifetime Value and Segmentation Results")
-            st.dataframe(summary_)
+            # Add segment labels to dataframe
+            df["Segment"] = [label_mapper[label] for label in cluster_labels]
             
-            # Display model performance metrics
-            st.markdown("## Model Performance Metrics")
+            # Show cluster centroids
+            st.subheader("Cluster Characteristics")
             
-            # Calculate prediction metrics using holdout data
-            summary_cal_holdout['Predicted_purchases_holdout'] = bgf.conditional_expected_number_of_purchases_up_to_time(
-                184,  # 184 days - same as original code
-                summary_cal_holdout['frequency_cal'], 
-                summary_cal_holdout['recency_cal'], 
-                summary_cal_holdout['T_cal']
-            )
+            # Transform centers back to original scale
+            centers_original = scaler.inverse_transform(k_model.cluster_centers_)
+            centers_df = pd.DataFrame(centers_original, columns=clustering_columns)
+            centers_df["Segment"] = [label_mapper[i] for i in range(num_clusters)]
+            centers_df = centers_df.set_index("Segment")
             
-            # Filter out NaN values
-            mask = ~(np.isnan(summary_cal_holdout['frequency_holdout']) | np.isnan(summary_cal_holdout['Predicted_purchases_holdout']))
-            valid_actual = summary_cal_holdout['frequency_holdout'][mask]
-            valid_predicted = summary_cal_holdout['Predicted_purchases_holdout'][mask]
+            # Format the centroid values for better readability
+            st.dataframe(centers_df.style.format({
+                "predicted_purchases": "{:.2f}",
+                "predicted_clv": "${:.2f}",
+                "profit_margin": "${:.2f}",
+                "Expected_Avg_Sales": "${:.2f}" if "Expected_Avg_Sales" in centers_df.columns else None
+            }))
             
-            # Calculate metrics
-            bgf_mae_purchase = mean_absolute_error(valid_actual, valid_predicted)
-            bgf_mse_purchase = mean_squared_error(valid_actual, valid_predicted)
-            bgf_rmse_purchase = sqrt(bgf_mse_purchase)
-            r2 = r2_score(valid_actual, valid_predicted)
+            # Segment statistics
+            st.subheader("Segment Statistics")
+            segment_stats = df.groupby("Segment").agg({
+                "CustomerID": "count",
+                "predicted_purchases": "mean",
+                "predicted_clv": "mean",
+                "profit_margin": "mean"
+            }).rename(columns={"CustomerID": "Count"})
             
-            # Create metrics DataFrame
-            metrics_df = pd.DataFrame({
-                'Metric': ['MAE', 'MSE', 'RMSE', 'R²'],
-                'Value': [bgf_mae_purchase, bgf_mse_purchase, bgf_rmse_purchase, r2]
-            })
+            # Format and display segment statistics
+            st.dataframe(segment_stats.style.format({
+                "Count": "{:.0f}",
+                "predicted_purchases": "{:.2f}",
+                "predicted_clv": "${:.2f}",
+                "profit_margin": "${:.2f}"
+            }))
             
-            st.dataframe(metrics_df)
+            # Visualizations
+            st.subheader("Segment Visualizations")
             
-            # Create visualizations
+            # Create tabs for different visualizations
+            tab1, tab2, tab3 = st.tabs(["Segment Distribution", "Scatter Plot", "CLV Distribution"])
             
-            # Cluster pie chart - similar to original analysis
-            st.markdown("## Customer Segmentation")
-            segment_counts = summary_['Labels'].value_counts()
+            with tab1:
+                # Pie chart of segment distribution
+                fig, ax = plt.subplots(figsize=(8, 8))
+                segment_counts = df["Segment"].value_counts()
+                
+                # Function to show percentage and count
+                def autopct_format(values):
+                    def my_format(pct):
+                        total = sum(values)
+                        val = int(round(pct*total/100.0))
+                        return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
+                    return my_format
+                
+                # Create the pie chart with the same style as original
+                explode = [0.05] * len(segment_counts)
+                ax.pie(segment_counts, 
+                    labels=segment_counts.index, 
+                    explode=explode,
+                    autopct=autopct_format(segment_counts.values),
+                    startangle=180,
+                    shadow=False)
+                
+                ax.set_title("Customer Segment Distribution", fontsize=16)
+                st.pyplot(fig)
             
-            # Create Altair pie chart
-            pie_data = pd.DataFrame({
-                'Segment': segment_counts.index,
-                'Count': segment_counts.values,
-                'Percentage': segment_counts.values / segment_counts.sum() * 100
-            })
+            with tab2:
+                # Scatter plot of predicted purchases vs CLV by segment
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                
+                # Create a scatter plot with segments
+                sns.scatterplot(
+                    data=df, 
+                    x="predicted_purchases", 
+                    y="predicted_clv", 
+                    hue="Segment", 
+                    palette="Set1",
+                    alpha=0.6,
+                    ax=ax2
+                )
+                
+                # Add segment centroids
+                for i, segment in enumerate(centers_df.index):
+                    ax2.scatter(
+                        centers_df.loc[segment, "predicted_purchases"],
+                        centers_df.loc[segment, "predicted_clv"], 
+                        s=200, 
+                        c='black', 
+                        marker='X', 
+                        label=f"{segment} centroid" if i == 0 else None
+                    )
+                
+                ax2.set_xlabel('Predicted Purchases', fontsize=12)
+                ax2.set_ylabel('Predicted CLV ($)', fontsize=12)
+                ax2.set_title('Customer Segments: Predicted Purchases vs CLV', fontsize=14)
+                
+                # Move the legend outside the plot for better visibility
+                ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+                plt.tight_layout()
+                
+                st.pyplot(fig2)
             
-            # Create pie chart using matplotlib as in original code
-            fig, ax = plt.subplots(figsize=(8, 8))
-            explode = [0.05] * len(segment_counts)
+            with tab3:
+                # Box plot of CLV by segment
+                fig3, ax3 = plt.subplots(figsize=(10, 6))
+                
+                # Sort segments by median CLV for better visualization
+                segment_order = df.groupby("Segment")["predicted_clv"].median().sort_values().index
+                
+                sns.boxplot(
+                    data=df,
+                    x="Segment",
+                    y="predicted_clv",
+                    order=segment_order,
+                    palette="Set1",
+                    ax=ax3
+                )
+                
+                ax3.set_xlabel('Segment', fontsize=12)
+                ax3.set_ylabel('Predicted CLV ($)', fontsize=12)
+                ax3.set_title('CLV Distribution by Segment', fontsize=14)
+                
+                st.pyplot(fig3)
             
-            # Function to show percentage and count
-            def autopct_format(values):
-                def my_format(pct):
-                    total = sum(values)
-                    val = int(round(pct*total/100.0))
-                    return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
-                return my_format
+            # Option to download segmented data
+            st.subheader("Download Results")
             
-            # Create the pie chart
-            ax.pie(segment_counts, 
-                labels=segment_counts.index, 
-                explode=explode,
-                autopct=autopct_format(segment_counts),
-                startangle=180,
-                shadow=False)
+            # Prepare download data
+            output_columns = ["CustomerID", "frequency", "recency", "T", 
+                             "monetary_value", "predicted_purchases", 
+                             "predicted_clv", "profit_margin", "Segment"]
             
-            ax.set_title("Customer Segment Distribution", fontsize=16)
-            st.pyplot(fig)
+            download_df = df[[col for col in output_columns if col in df.columns]]
             
-            # Scatterplot of predicted purchases vs predicted CLV
-            st.markdown("## Purchase vs CLV by Segment")
-            fig2, ax2 = plt.subplots(figsize=(8, 6))
-            for label in summary_['Labels'].unique():
-                subset = summary_[summary_['Labels'] == label]
-                ax2.scatter(subset['predicted_purchases'], subset['predicted_clv'], 
-                           label=label, alpha=0.5)
-            
-            ax2.set_xlabel('Predicted Purchases')
-            ax2.set_ylabel('Predicted CLV')
-            ax2.set_title('Customer Segments by Purchase Prediction and CLV')
-            ax2.legend()
-            st.pyplot(fig2)
-            
-            # Add download button for results
-            csv = summary_.to_csv(index=False)
+            # Add download button
+            csv = download_df.to_csv(index=False)
             st.download_button(
-                label="Download Results as CSV",
+                label="Download Segmented Customer Data",
                 data=csv,
-                file_name="customer_clv_segments.csv",
+                file_name="customer_segments.csv",
                 mime="text/csv"
             )
             
@@ -332,8 +267,24 @@ if uploaded_file is not None:
             import traceback
             st.error(traceback.format_exc())
     
-    # Call the function with the uploaded data
-    process_data(uploaded_file, days, profit_margin, cal_end_date, obs_end_date)
+    # Execute the function with the uploaded file
+    process_rfm_data(uploaded_file, profit_margin)
     
 else:
-    st.info("Please upload a transaction data CSV file")
+    st.info("Please upload your pre-processed RFM data CSV file")
+    
+    # Show example of expected data format
+    st.subheader("Expected Data Format Example:")
+    example_data = {
+        "CustomerID": [12346, 12347, 12348],
+        "frequency": [4.0, 1.0, 0.0],
+        "recency": [226.0, 1.0, 0.0],
+        "T": [378.0, 376.0, 373.0],
+        "monetary_value": [77.18, 637.78, 0.0],
+        "predicted_purchases": [1.28, 0.45, 0.23],
+        "actual_purchases": [0.0, 0.0, 0.0],
+        "Expected_Avg_Sales": [58.83, 637.78, 0.0],
+        "predicted_clv": [75.22, 286.42, 0.0],
+        "profit_margin": [3.76, 14.32, 0.0]
+    }
+    st.dataframe(pd.DataFrame(example_data))
