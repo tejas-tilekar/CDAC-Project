@@ -1,264 +1,207 @@
 import streamlit as st
 import pandas as pd
+import math
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+import datetime
+import altair as alt
+import time
 import warnings
 warnings.filterwarnings("ignore")
+from math import sqrt
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+
+# Import lifetimes package with proper error handling
+try:
+    import lifetimes
+    from lifetimes.plotting import *
+    from lifetimes import BetaGeoFitter, ParetoNBDFitter
+    from lifetimes.utils import calibration_and_holdout_data
+except ImportError:
+    st.error("The lifetimes package is not installed. Please install it with 'pip install lifetimes'.")
+    st.stop()
+
+# Seed for reproducibility
+np.random.seed(42)
 
 # App title and description
-st.title("Customer Segmentation from Pre-Processed RFM Data")
-st.markdown("Upload your pre-processed RFM data to visualize customer segments")
+st.title("CLV Prediction and Segmentation App")
+st.markdown("Upload the RFM data to get the customer lifetime value and their segmentation")
 
 # Display header image
 st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_container_width=True)
+
+# File uploader
+data = st.file_uploader("File Uploader", type=['csv'])
 
 # Sidebar
 st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width=150)
 st.sidebar.markdown("**MBA Project**")
 st.sidebar.title("Input Features :pencil:")
 
-# Sidebar input for profit margin (in case you need to recalculate)
-profit_margin = st.sidebar.slider("Select the Profit Margin", min_value=0.01, max_value=0.09, step=0.01, value=0.05)
+# Sidebar inputs
+days = st.sidebar.slider("Select The No. Of Days", min_value=1, max_value=365, step=1)
+profit = st.sidebar.slider("Select the Profit Margin", min_value=0.01, max_value=0.09, step=0.01)
 
 # Sidebar instructions
 st.sidebar.markdown("""
-## Instructions
-Upload your pre-processed RFM data CSV file.
+Before uploading the file, please select the input features first.
 
-**Expected columns:**
-- CustomerID
-- frequency
-- recency
-- T
-- monetary_value
-- predicted_purchases
-- actual_purchases (optional)
-- Expected_Avg_Sales (optional)
-- predicted_clv 
-- profit_margin (optional, will recalculate if needed)
+Also, please make sure the columns are in proper format. For reference you can download the [dummy data](https://github.com/tejas-tilekar/CDAC-Project/blob/main/Deployment%20files/sample_file.csv).
 
-The app will segment customers based on your data and provide visualizations.
+**Note:** Only Use "CSV" File.
 """)
 
-# File uploader
-uploaded_file = st.file_uploader("Upload Pre-processed RFM Data", type=['csv'])
-
-# Main processing function
-if uploaded_file is not None:
-    def process_rfm_data(rfm_data, profit_margin):
+# Main function to process data
+if data is not None:
+    def load_data(data, days, profit):
         try:
-            # Load the data
-            df = pd.read_csv(rfm_data)
+            # Load data
+            input_data = pd.read_csv(data)
             
-            # Check for required columns
-            required_columns = ["CustomerID", "frequency", "recency", "T", "monetary_value", "predicted_purchases", "predicted_clv"]
-            missing_columns = [col for col in required_columns if col not in df.columns]
+            # Handle potential first column as index issue
+            if input_data.columns[0] == 'Unnamed: 0':
+                input_data = input_data.iloc[:, 1:]
+            
+            # Check if required columns exist
+            required_columns = ['frequency', 'recency', 'T', 'monetary_value']
+            missing_columns = [col for col in required_columns if col not in input_data.columns]
             
             if missing_columns:
-                st.error(f"Missing required columns: {', '.join(missing_columns)}")
+                st.error(f"Missing required columns: {', '.join(missing_columns)}. Please ensure your CSV has these columns.")
                 return
             
-            # Show data sample
-            st.subheader("Data Preview")
-            st.dataframe(df.head())
+            # Reset index if necessary to ensure CustomerID is accessible
+            if 'CustomerID' not in input_data.columns and input_data.index.name == 'CustomerID':
+                input_data = input_data.reset_index()
             
-            # Basic data stats
-            st.subheader("Dataset Information")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Total Customers", df["CustomerID"].nunique())
-            with col2:
-                st.metric("Avg CLV", f"${df['predicted_clv'].mean():.2f}")
-            with col3:
-                st.metric("Avg Predicted Purchases", f"{df['predicted_purchases'].mean():.2f}")
+            # BG Model with same parameters as in first code
+            bgf = BetaGeoFitter(penalizer_coef=0.5)
+            bgf.fit(input_data["frequency"], input_data["recency"], input_data["T"])
             
-            # Recalculate profit margin if needed or missing
-            if "profit_margin" not in df.columns or st.checkbox("Recalculate profit margin with new value"):
-                df["profit_margin"] = df["predicted_clv"] * profit_margin
-                st.success(f"Profit margin recalculated using {profit_margin:.2%}")
+            # Calculate probability alive (matches the first code)
+            input_data["p_alive"] = bgf.conditional_probability_alive(
+                input_data["frequency"], 
+                input_data["recency"], 
+                input_data["T"]
+            )
             
-            # Prepare data for clustering
-            if "Expected_Avg_Sales" not in df.columns:
-                clustering_columns = ["predicted_purchases", "predicted_clv", "profit_margin"]
-                st.warning("Expected_Avg_Sales column not found. Using predicted_purchases, predicted_clv, and profit_margin for clustering.")
-            else:
-                clustering_columns = ["predicted_purchases", "Expected_Avg_Sales", "predicted_clv", "profit_margin"]
+            # Predict purchases for future time period (matching the first code)
+            t = days  # User-defined period
+            input_data["predicted_purchases"] = bgf.conditional_expected_number_of_purchases_up_to_time(
+                t, 
+                input_data["frequency"], 
+                input_data["recency"], 
+                input_data["T"]
+            )
             
-            # Extract data for clustering
-            cluster_data = df[clustering_columns].copy()
+            # Gamma Gamma Model - Filter out zero frequency and monetary values
+            # This matches the filtering in the first code
+            model_data = input_data[(input_data["monetary_value"] > 0) & (input_data["frequency"] > 0)].copy()
             
-            # Handle any NaN values
-            cluster_data = cluster_data.fillna(0)
+            if len(model_data) == 0:
+                st.error("No valid data remains after filtering out rows with frequency or monetary_value <= 0")
+                return
             
-            # Scale the data for clustering
+            # Fit Gamma-Gamma model with same parameters as in first code
+            ggf = lifetimes.GammaGammaFitter(penalizer_coef=0.0)
+            ggf.fit(model_data["frequency"], model_data["monetary_value"])
+            
+            # Calculate expected average sales (matches the "Expected_Avg_Sales" in first code)
+            model_data["Expected_Avg_Sales"] = ggf.conditional_expected_average_profit(
+                model_data["frequency"], 
+                model_data["monetary_value"]
+            )
+            
+            # Calculate CLV using the exact same parameters as in the first code
+            model_data["predicted_clv"] = ggf.customer_lifetime_value(
+                bgf,  # Using the BG model fitted above
+                model_data["frequency"], 
+                model_data["recency"], 
+                model_data["T"], 
+                model_data["monetary_value"], 
+                time=t,  # Using the user-defined period 
+                freq='D',  # Daily frequency 
+                discount_rate=0.01  # Same discount rate as first code
+            )
+            
+            # Calculate profit margin
+            model_data["profit_margin"] = model_data["predicted_clv"] * profit
+            
+            # K-Means Model
+            # Use the same columns as in the first code
+            col = ["predicted_purchases", "Expected_Avg_Sales", "predicted_clv", "profit_margin"]
+            new_df = model_data[col]
+            
+            # Scale the data for better clustering
+            from sklearn.preprocessing import StandardScaler
             scaler = StandardScaler()
-            scaled_data = scaler.fit_transform(cluster_data)
+            scaled_data = scaler.fit_transform(new_df)
             
-            # Perform K-means clustering
-            st.subheader("Customer Segmentation")
-            
-            # Allow user to choose number of clusters or use default
-            if st.checkbox("Customize number of clusters"):
-                num_clusters = st.slider("Number of clusters", min_value=2, max_value=10, value=4)
-            else:
-                num_clusters = 4  # Default to 4 clusters as in original code
-            
-            k_model = KMeans(n_clusters=num_clusters, init="k-means++", max_iter=1000, random_state=42)
+            # K-Means clustering with same parameters and cluster count
+            k_model = KMeans(n_clusters=4, init="k-means++", max_iter=1000, random_state=42)
             cluster_labels = k_model.fit_predict(scaled_data)
             
-            # Map cluster labels to meaningful segments
-            # If 4 clusters, use the original mapping
-            if num_clusters == 4:
-                label_mapper = {0: "Low", 1: "High", 2: "Medium", 3: "V_High"}
-            else:
-                # Create generic labels for other cluster counts
-                label_mapper = {i: f"Segment {i+1}" for i in range(num_clusters)}
+            # Add labels to the dataframe
+            model_data["Labels"] = cluster_labels
             
-            # Add segment labels to dataframe
-            df["Segment"] = [label_mapper[label] for label in cluster_labels]
+            # Map numerical labels to descriptive labels (matching the first code)
+            label_mapper = {0: "Low", 1: "High", 2: "Medium", 3: "V_High"}
+            model_data["Labels"] = model_data["Labels"].map(label_mapper)
             
-            # Show cluster centroids
-            st.subheader("Cluster Characteristics")
+            # Display the results dataframe
+            st.write(model_data)
             
-            # Transform centers back to original scale
-            centers_original = scaler.inverse_transform(k_model.cluster_centers_)
-            centers_df = pd.DataFrame(centers_original, columns=clustering_columns)
-            centers_df["Segment"] = [label_mapper[i] for i in range(num_clusters)]
-            centers_df = centers_df.set_index("Segment")
+            # Create count bar chart
+            chart = alt.Chart(model_data).mark_bar().encode(
+                y=alt.Y('Labels:N', title='Customer Segment'),
+                x=alt.X('count(Labels):Q', title='Number of Customers')
+            ).properties(
+                title='Customer Segmentation Distribution'
+            )
             
-            # Format the centroid values for better readability
-            st.dataframe(centers_df.style.format({
-                "predicted_purchases": "{:.2f}",
-                "predicted_clv": "${:.2f}",
-                "profit_margin": "${:.2f}",
-                "Expected_Avg_Sales": "${:.2f}" if "Expected_Avg_Sales" in centers_df.columns else None
-            }))
+            # Add text labels to the chart
+            text = chart.mark_text(
+                align='left',
+                baseline='middle',
+                dx=3
+            ).encode(
+                text='count(Labels):Q'
+            )
             
-            # Segment statistics
-            st.subheader("Segment Statistics")
-            segment_stats = df.groupby("Segment").agg({
-                "CustomerID": "count",
-                "predicted_purchases": "mean",
-                "predicted_clv": "mean",
-                "profit_margin": "mean"
-            }).rename(columns={"CustomerID": "Count"})
+            # Display the chart
+            st.altair_chart(chart + text, use_container_width=True)
             
-            # Format and display segment statistics
-            st.dataframe(segment_stats.style.format({
-                "Count": "{:.0f}",
-                "predicted_purchases": "{:.2f}",
-                "predicted_clv": "${:.2f}",
-                "profit_margin": "${:.2f}"
-            }))
+            # Create pie chart showing segment distribution
+            fig, ax = plt.subplots(figsize=(8, 8))
+            segment_counts = model_data["Labels"].value_counts()
             
-            # Visualizations
-            st.subheader("Segment Visualizations")
+            # Function to display both percentage and count in pie chart
+            def autopct_format(values):
+                def my_format(pct):
+                    total = sum(values)
+                    val = int(round(pct*total/100.0))
+                    return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
+                return my_format
             
-            # Create tabs for different visualizations
-            tab1, tab2, tab3 = st.tabs(["Segment Distribution", "Scatter Plot", "CLV Distribution"])
+            ax.pie(
+                segment_counts, 
+                labels=segment_counts.index,
+                autopct=autopct_format(segment_counts),
+                startangle=180, 
+                explode=[0.05, 0.05, 0.05, 0.05]
+            )
+            ax.set_title("Customer Segment Distribution")
             
-            with tab1:
-                # Pie chart of segment distribution
-                fig, ax = plt.subplots(figsize=(8, 8))
-                segment_counts = df["Segment"].value_counts()
-                
-                # Function to show percentage and count
-                def autopct_format(values):
-                    def my_format(pct):
-                        total = sum(values)
-                        val = int(round(pct*total/100.0))
-                        return '{p:.1f}%\n({v:d})'.format(p=pct, v=val)
-                    return my_format
-                
-                # Create the pie chart with the same style as original
-                explode = [0.05] * len(segment_counts)
-                ax.pie(segment_counts, 
-                    labels=segment_counts.index, 
-                    explode=explode,
-                    autopct=autopct_format(segment_counts.values),
-                    startangle=180,
-                    shadow=False)
-                
-                ax.set_title("Customer Segment Distribution", fontsize=16)
-                st.pyplot(fig)
-            
-            with tab2:
-                # Scatter plot of predicted purchases vs CLV by segment
-                fig2, ax2 = plt.subplots(figsize=(10, 6))
-                
-                # Create a scatter plot with segments
-                sns.scatterplot(
-                    data=df, 
-                    x="predicted_purchases", 
-                    y="predicted_clv", 
-                    hue="Segment", 
-                    palette="Set1",
-                    alpha=0.6,
-                    ax=ax2
-                )
-                
-                # Add segment centroids
-                for i, segment in enumerate(centers_df.index):
-                    ax2.scatter(
-                        centers_df.loc[segment, "predicted_purchases"],
-                        centers_df.loc[segment, "predicted_clv"], 
-                        s=200, 
-                        c='black', 
-                        marker='X', 
-                        label=f"{segment} centroid" if i == 0 else None
-                    )
-                
-                ax2.set_xlabel('Predicted Purchases', fontsize=12)
-                ax2.set_ylabel('Predicted CLV ($)', fontsize=12)
-                ax2.set_title('Customer Segments: Predicted Purchases vs CLV', fontsize=14)
-                
-                # Move the legend outside the plot for better visibility
-                ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.tight_layout()
-                
-                st.pyplot(fig2)
-            
-            with tab3:
-                # Box plot of CLV by segment
-                fig3, ax3 = plt.subplots(figsize=(10, 6))
-                
-                # Sort segments by median CLV for better visualization
-                segment_order = df.groupby("Segment")["predicted_clv"].median().sort_values().index
-                
-                sns.boxplot(
-                    data=df,
-                    x="Segment",
-                    y="predicted_clv",
-                    order=segment_order,
-                    palette="Set1",
-                    ax=ax3
-                )
-                
-                ax3.set_xlabel('Segment', fontsize=12)
-                ax3.set_ylabel('Predicted CLV ($)', fontsize=12)
-                ax3.set_title('CLV Distribution by Segment', fontsize=14)
-                
-                st.pyplot(fig3)
-            
-            # Option to download segmented data
-            st.subheader("Download Results")
-            
-            # Prepare download data
-            output_columns = ["CustomerID", "frequency", "recency", "T", 
-                             "monetary_value", "predicted_purchases", 
-                             "predicted_clv", "profit_margin", "Segment"]
-            
-            download_df = df[[col for col in output_columns if col in df.columns]]
+            # Display the pie chart
+            st.pyplot(fig)
             
             # Add download button
-            csv = download_df.to_csv(index=False)
+            csv = model_data.to_csv(index=False)
             st.download_button(
-                label="Download Segmented Customer Data",
+                label="Download Results as CSV",
                 data=csv,
-                file_name="customer_segments.csv",
+                file_name="clv_prediction_results.csv",
                 mime="text/csv"
             )
             
@@ -267,24 +210,9 @@ if uploaded_file is not None:
             import traceback
             st.error(traceback.format_exc())
     
-    # Execute the function with the uploaded file
-    process_rfm_data(uploaded_file, profit_margin)
+    # Call the function with the uploaded data
+    st.markdown("## Customer Lifetime Prediction Result :bar_chart:")
+    load_data(data, days, profit)
     
 else:
-    st.info("Please upload your pre-processed RFM data CSV file")
-    
-    # Show example of expected data format
-    st.subheader("Expected Data Format Example:")
-    example_data = {
-        "CustomerID": [12346, 12347, 12348],
-        "frequency": [4.0, 1.0, 0.0],
-        "recency": [226.0, 1.0, 0.0],
-        "T": [378.0, 376.0, 373.0],
-        "monetary_value": [77.18, 637.78, 0.0],
-        "predicted_purchases": [1.28, 0.45, 0.23],
-        "actual_purchases": [0.0, 0.0, 0.0],
-        "Expected_Avg_Sales": [58.83, 637.78, 0.0],
-        "predicted_clv": [75.22, 286.42, 0.0],
-        "profit_margin": [3.76, 14.32, 0.0]
-    }
-    st.dataframe(pd.DataFrame(example_data))
+    st.info("Please Upload the CSV File")
