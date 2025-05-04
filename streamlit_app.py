@@ -161,6 +161,8 @@ if data is not None:
                 summary_['Expected_Avg_Sales'] = ggf.conditional_expected_average_profit(
                     summary_['frequency'], summary_['monetary_value']
                 )
+
+                st.write(summary_.head())
                 
                 # Calculate CLV - exactly as in first code
                 st.write("Calculating Customer Lifetime Value...")
