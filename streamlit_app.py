@@ -6,6 +6,7 @@ import datetime
 import altair as alt
 import time
 import warnings
+import seaborn as sns
 warnings.filterwarnings("ignore")
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 try:
     import lifetimes
     from lifetimes.plotting import *
-    from lifetimes import BetaGeoFitter, ParetoNBDFitter
+    from lifetimes import BetaGeoFitter
     from lifetimes.utils import calibration_and_holdout_data
     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 except ImportError:
@@ -94,6 +95,7 @@ if data is not None:
                 
                 st.write("Removing missing CustomerIDs...")
                 df.dropna(axis=0, subset=["CustomerID"], inplace=True)
+                df.dropna(axis = 0, subset = ["Description"], inplace = True)
                 
                 st.write("Calculating amount...")
                 df['Amount'] = df['Quantity'] * df['UnitPrice']
@@ -111,6 +113,12 @@ if data is not None:
                 st.write("Fitting BG/NBD model...")
                 bgf = BetaGeoFitter(penalizer_coef=0.5)
                 bgf.fit(summary_bgf['frequency'], summary_bgf['recency'], summary_bgf['T'])
+
+                # Predict purchases
+                t = days
+                summary_bgf['predicted_purchases'] = bgf.conditional_expected_number_of_purchases_up_to_time(
+                    t, summary_bgf['frequency'], summary_bgf['recency'], summary_bgf['T']
+                )
                 
                 # Create calibration and holdout data (exactly as in first code)
                 st.write("Creating calibration and holdout data...")
@@ -132,11 +140,7 @@ if data is not None:
                     penalizer_coef=0.5
                 )
                 
-                # Predict purchases
-                t = days
-                summary_bgf['predicted_purchases'] = bgf.conditional_expected_number_of_purchases_up_to_time(
-                    t, summary_bgf['frequency'], summary_bgf['recency'], summary_bgf['T']
-                )
+
                 
                 # Set actual purchases from holdout (divide by 10 as in first code)
                 st.write("Calculating actual purchases...")
@@ -166,7 +170,7 @@ if data is not None:
                     summary_['recency'],
                     summary_['T'],
                     summary_['monetary_value'],
-                    time=30,  # Fixed at 30 days as in first code
+                    time=days,  # Fixed at 30 days as in first code
                     freq='D',
                     discount_rate=0.01
                 )
