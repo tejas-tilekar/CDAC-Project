@@ -32,14 +32,14 @@ st.title("CLV Prediction and Segmentation App")
 st.markdown("Upload transaction data to get the customer lifetime value and their segmentation")
 
 # Display header image
-st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_container_width=True)
+st.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", use_container_width=True)
 
 # File uploader
 data = st.file_uploader("File Uploader", type=['csv'])
 
 # Sidebar
-st.sidebar.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-value.jpg", width=150)
-st.sidebar.markdown("**MBA Project**")
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/f/f8/SIMS_official_logo.jpg", width=150)
+st.sidebar.markdown("**MBA Project by Vrushali Ovhal**")
 st.sidebar.title("Input Features :pencil:")
 
 # Sidebar inputs
