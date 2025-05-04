@@ -281,10 +281,10 @@ if data is not None:
             ax2.set_title('Customer Segment Distribution', fontsize=16)
             st.pyplot(fig2)
 
-            # Top 10 Customers by Predicted CLV
+           # Top 10 Customers by Predicted CLV
             st.subheader("Top 10 Customers by Predicted CLV")
             
-            top_customers = summary_[['CustomerID', 'predicted_clv']].sort_values(by='predicted_clv', ascending=False).head(10).sort_values(by='predicted_clv')
+            top_customers = summary_[['CustomerID', 'predicted_clv']].sort_values(by='predicted_clv', ascending=False).head(10)
             
             bar_fig, bar_ax = plt.subplots(figsize=(10, 6))
             sns.barplot(
@@ -297,7 +297,9 @@ if data is not None:
             bar_ax.set_title("Top 10 Customers by Predicted CLV")
             bar_ax.set_xlabel("Customer ID")
             bar_ax.set_ylabel("Predicted CLV")
+            bar_ax.set_xticklabels(bar_ax.get_xticklabels(), rotation=45)  # optional: rotate x labels
             st.pyplot(bar_fig)
+
 
             
             # Download button
