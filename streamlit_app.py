@@ -99,7 +99,8 @@ if data is not None:
                 
                 st.write("Calculating amount...")
                 df['Amount'] = df['Quantity'] * df['UnitPrice']
-                st.write(df.isnull().sum())
+                st.dataframe(df.isnull().sum().reset_index().rename(columns={0: 'Missing Values', 'index': 'Column'}))
+
                 st.dataframe(df.describe())
                 
                 # Create RFM data
