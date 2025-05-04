@@ -295,8 +295,8 @@ if data is not None:
                 ax=bar_ax
             )
             bar_ax.set_title("Top 10 Customers by Predicted CLV")
-            bar_ax.set_xlabel("Predicted CLV")
-            bar_ax.set_ylabel("Customer ID")
+            bar_ax.set_xlabel("Customer ID")
+            bar_ax.set_ylabel("Predicted CLV")
             st.pyplot(bar_fig)
 
             
