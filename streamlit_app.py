@@ -105,6 +105,7 @@ if data is not None:
                 rfmt_data = lifetimes.utils.summary_data_from_transaction_data(
                     df, 'CustomerID', 'InvoiceDate', monetary_value_col='Amount'
                 )
+                st.dataframe(rfmt_data.describe())
                 
                 # Create summary_bgf (to match first code)
                 summary_bgf = rfmt_data.copy()
