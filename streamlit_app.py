@@ -28,7 +28,7 @@ st.title("CLV Prediction and Segmentation App")
 st.markdown("Upload the RFM data to get the customer lifetime value and their segmentation")
 
 # Display header image
-st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_column_width=True)
+st.image("https://ultracommerce.co/wp-content/uploads/2022/04/maximize-customer-lifetime-value.png", use_container_width=True)
 
 # File uploader
 data = st.file_uploader("File Uploader", type=['csv'])
