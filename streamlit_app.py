@@ -217,9 +217,6 @@ if data is not None:
             st.subheader("Customer Lifetime Value and Segmentation Results")
             st.dataframe(summary_)
             
-            # Cluster statistics
-            st.subheader("Segment Statistics")
-            st.dataframe(summary_.groupby('Labels').mean().T)
             
             # Visualization of segments
             st.subheader("Customer Segmentation Visualization")
@@ -283,6 +280,25 @@ if data is not None:
             )
             ax2.set_title('Customer Segment Distribution', fontsize=16)
             st.pyplot(fig2)
+
+            # Top 10 Customers by Predicted CLV
+            st.subheader("Top 10 Customers by Predicted CLV")
+            
+            top_customers = summary_[['CustomerID', 'predicted_clv']].sort_values(by='predicted_clv', ascending=False).head(10)
+            
+            bar_fig, bar_ax = plt.subplots(figsize=(10, 6))
+            sns.barplot(
+                data=top_customers,
+                x='predicted_clv',
+                y='CustomerID',
+                palette='viridis',
+                ax=bar_ax
+            )
+            bar_ax.set_title("Top 10 Customers by Predicted CLV")
+            bar_ax.set_xlabel("Predicted CLV")
+            bar_ax.set_ylabel("Customer ID")
+            st.pyplot(bar_fig)
+
             
             # Download button
             csv = summary_.to_csv(index=False)
