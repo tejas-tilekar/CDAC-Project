@@ -289,7 +289,7 @@ if data is not None:
             st.download_button(
                 label="Download Results as CSV",
                 data=csv,
-                file_name="customer_segmentation_result.csv",
+                file_name="customer_segmentation_result_streamlit.csv",
                 mime="text/csv"
             )
             
