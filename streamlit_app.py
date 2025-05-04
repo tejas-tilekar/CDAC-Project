@@ -284,7 +284,7 @@ if data is not None:
             # Top 10 Customers by Predicted CLV
             st.subheader("Top 10 Customers by Predicted CLV")
             
-            top_customers = summary_[['CustomerID', 'predicted_clv']].sort_values(by='CustomerID', ascending=False).head(10)
+            top_customers = summary_[['CustomerID', 'predicted_clv']].sort_values(by='predicted_clv', ascending=False).head(10).sort_values(by='predicted_clv')
             
             bar_fig, bar_ax = plt.subplots(figsize=(10, 6))
             sns.barplot(
