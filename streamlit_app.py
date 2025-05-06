@@ -38,8 +38,8 @@ st.image("https://www.adlibweb.com/wp-content/uploads/2020/06/customer-lifetime-
 data = st.file_uploader("File Uploader", type=['csv'])
 
 # Sidebar
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/f/f8/SIMS_official_logo.jpg", width=150)
-st.sidebar.markdown("**MBA Project by Vrushali Ovhal**")
+st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6lfYmhI4ABSDZUGpa7yii9hjI9peFwwiAcw&s", width=150)
+st.sidebar.markdown("**Project by Tejas Tilekar**")
 st.sidebar.title("Input Features :pencil:")
 
 # Sidebar inputs
